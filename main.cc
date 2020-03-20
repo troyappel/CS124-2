@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h> 
 
+size_t CUTOFF = 10;
+
 struct Matrix{
     size_t sz;
     double* arr; 
@@ -10,11 +12,15 @@ struct Matrix{
     Matrix(size_t sz) {
         this->sz = sz;
         this->arr = new double[sz * sz];
-        memset(arr, 0, sizeof(arr));
+        this->clear();
     }
 
     inline double& index(size_t x, size_t y) {
         return this->arr[sz*x + y];
+    }
+
+    inline void clear() {
+        memset(arr, 0, sz*sz*sizeof(double));
     }
 
     ~Matrix() {
@@ -53,24 +59,26 @@ struct MatPak {
 
 };
 
-
-// Multiply a and b, put result in res
-void mmult(Matrix* a, Matrix* b, Matrix* res) {
-    if (a->sz != b->sz || a->sz != res->sz) {
-        printf("Wrong sizes\n");
-        exit(1);
-    }
-
-    size_t n = a->sz;
+void mmult_s(MatPak a, MatPak b, MatPak res) {
+    size_t n = a.e_x - a.s_x;
 
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             for (int k = 0; k < n; k++) {
-                res->index(i, j) += a->index(i,k) * b->index(k, j);
+                res.index(i, j) += a.index(i,k) * b.index(k, j);
             }
         }
     }
 }
+
+
+// Multiply a and b, put result in res
+void mmult(Matrix* a, Matrix* b, Matrix* res) {
+    res->clear();
+    mmult_s(MatPak{a, 0, 0, a->sz, a->sz}, MatPak{b, 0, 0, b->sz, b->sz}, MatPak{res, 0, 0, res->sz, res->sz});
+}
+
+
 
 void madd_s(MatPak a, MatPak b, MatPak res) {
     // assert(a.m->sz >= a.e_x);
@@ -131,6 +139,7 @@ void mmult_strassen(Matrix* a, Matrix* b, Matrix* res);
 void mmult_strassen_s(MatPak a, MatPak b, MatPak res);
 
 void mmult_strassen(Matrix* a, Matrix* b, Matrix* res) {
+    res->clear();
     mmult_strassen_s(MatPak{a, 0, 0, a->sz, a->sz}, MatPak{b, 0, 0, b->sz, b->sz}, MatPak{res, 0, 0, res->sz, res->sz});
 }
 
@@ -140,6 +149,11 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
 
     if (n <= 1) {
         res.index(0,0) = a.index(0,0) * b.index(0,0);
+        return;
+    }
+
+    if (n <= CUTOFF) {
+        mmult_s(a,b,res);
         return;
     }
 
@@ -166,7 +180,6 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
     mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, a.make(0,0,n2,n2), MatPak{M3, 0, 0, n2, n2});
 
     msub_s(b.make( 0, n2, n2, n), b.make( 0, 0, n2, n2), MatPak{scratch1, 0, 0, n2, n2});
-    scratch1->print();
     mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, a.make(n2,n2,n,n), MatPak{M4, 0, 0, n2, n2});
 
     madd_s(a.make( 0, 0, n2, n2), a.make( n2, 0, n, n2), MatPak{scratch1, 0, 0, n2, n2});
@@ -219,24 +232,23 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
 }
 
 int main() {
-    Matrix* a = new Matrix(4);
+    Matrix* a = new Matrix(2);
     a->index(0,1) = 1;
     a->index(1,0) = 1;
-    a->index(2,2) = 2;
-    a->index(3,1) = 5;
+
     a->print();
 
-    Matrix* b = new Matrix(4);
-    b->index(0,0) = 1;
-    b->index(1,1) = 1;
-    b->index(2,2) = 1;
-    b->index(3,3) = 1;
+    Matrix* b = new Matrix(2);
+    b->index(0,0) = 2;
+    b->index(1,1) = 2;
     b->print();
 
 
-    Matrix* res = new Matrix(4);
+    Matrix* res = new Matrix(2);
 
     mmult_strassen(a,b,res);
-
     res->print();
+
+    mmult(a,b,res);
+    res ->print();
 }
