@@ -40,6 +40,12 @@ struct Matrix{
     }
 };
 
+struct MatPak;
+
+MatPak make(Matrix* m,size_t s_x,size_t s_y, size_t e_x, size_t e_y);
+
+
+
 struct MatPak {
     Matrix* m;
     size_t s_x;
@@ -48,16 +54,40 @@ struct MatPak {
     size_t e_x;
     size_t e_y;
 
+    double nothing;
+
+    bool padded;
+
     inline double& index(size_t x, size_t y) {
+        if(padded && (x == e_x - s_x - 1 || y == e_y - s_y - 1)) {
+            nothing = 0;
+            return nothing;
+        }
         return m->index(s_x + x, s_y + y);
     };
 
-    inline MatPak make(size_t s_x,size_t s_y, size_t e_x, size_t e_y) {
-        return MatPak{m, this->s_x + s_x, this->s_y + s_y, this->s_x + e_x, this->s_y + e_y};
+    inline MatPak subPak(size_t s_x,size_t s_y, size_t e_x, size_t e_y) {
+        return make(m, this->s_x + s_x, this->s_y + s_y, this->s_x + e_x, this->s_y + e_y);
     };
 
-
 };
+
+// Always returns an even-size MatPak, padded with 0 if bounds given are odd 
+MatPak make(Matrix* m,size_t s_x,size_t s_y, size_t e_x, size_t e_y) {
+    bool padded;
+    size_t n = e_x - e_y;
+    if (n & 1) {
+        e_x++;
+        e_y++;
+        padded = true;
+    } else {
+        padded = false;
+    }
+
+    return MatPak{m, s_x, s_y, e_x, e_y, padded};
+
+}
+
 
 void mmult_s(MatPak a, MatPak b, MatPak res) {
     size_t n = a.e_x - a.s_x;
@@ -168,29 +198,29 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
     Matrix* scratch1 = new Matrix(n2);
     Matrix* scratch2 = new Matrix(n2);
 
-    madd_s(a.make( 0, 0, n2, n2), a.make( n2, n2, n, n), MatPak{scratch1, 0, 0, n2, n2});
-    madd_s(b.make( 0, 0, n2, n2), b.make( n2, n2, n, n), MatPak{scratch2, 0, 0, n2, n2});
+    madd_s(a.subPak( 0, 0, n2, n2), a.subPak( n2, n2, n, n), MatPak{scratch1, 0, 0, n2, n2});
+    madd_s(b.subPak( 0, 0, n2, n2), b.subPak( n2, n2, n, n), MatPak{scratch2, 0, 0, n2, n2});
     mmult_strassen(scratch1, scratch2, M1);
 
 
-    madd_s(a.make( 0, n2, n2, n), a.make( n2, n2, n, n), MatPak{scratch1, 0, 0, n2, n2});
-    mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, b.make(0,0,n2,n2), MatPak{M2, 0, 0, M2->sz, M2->sz});
+    madd_s(a.subPak( 0, n2, n2, n), a.subPak( n2, n2, n, n), MatPak{scratch1, 0, 0, n2, n2});
+    mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, b.subPak(0,0,n2,n2), MatPak{M2, 0, 0, M2->sz, M2->sz});
 
-    msub_s(b.make( n2, 0, n, n2), b.make( n2, n2, n, n), MatPak{scratch1, 0, 0, n2, n2});
-    mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, a.make(0,0,n2,n2), MatPak{M3, 0, 0, n2, n2});
+    msub_s(b.subPak( n2, 0, n, n2), b.subPak( n2, n2, n, n), MatPak{scratch1, 0, 0, n2, n2});
+    mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, a.subPak(0,0,n2,n2), MatPak{M3, 0, 0, n2, n2});
 
-    msub_s(b.make( 0, n2, n2, n), b.make( 0, 0, n2, n2), MatPak{scratch1, 0, 0, n2, n2});
-    mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, a.make(n2,n2,n,n), MatPak{M4, 0, 0, n2, n2});
+    msub_s(b.subPak( 0, n2, n2, n), b.subPak( 0, 0, n2, n2), MatPak{scratch1, 0, 0, n2, n2});
+    mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, a.subPak(n2,n2,n,n), MatPak{M4, 0, 0, n2, n2});
 
-    madd_s(a.make( 0, 0, n2, n2), a.make( n2, 0, n, n2), MatPak{scratch1, 0, 0, n2, n2});
-    mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, b.make(n2,n2,n,n), MatPak{M5, 0, 0, M5->sz, M5->sz});
+    madd_s(a.subPak( 0, 0, n2, n2), a.subPak( n2, 0, n, n2), MatPak{scratch1, 0, 0, n2, n2});
+    mmult_strassen_s(MatPak{scratch1, 0,0,n2,n2}, b.subPak(n2,n2,n,n), MatPak{M5, 0, 0, M5->sz, M5->sz});
 
-    msub_s(a.make( 0, n2, n2, n), a.make( 0,0,n2,n2), MatPak{scratch1, 0, 0, n2, n2});
-    madd_s(b.make( 0,0,n2,n2), b.make( n2,0,n,n2), MatPak{scratch2, 0, 0, n2, n2});
+    msub_s(a.subPak( 0, n2, n2, n), a.subPak( 0,0,n2,n2), MatPak{scratch1, 0, 0, n2, n2});
+    madd_s(b.subPak( 0,0,n2,n2), b.subPak( n2,0,n,n2), MatPak{scratch2, 0, 0, n2, n2});
     mmult_strassen(scratch1, scratch2, M6);
 
-    msub_s(a.make( n2, 0, n, n2), a.make( n2,n2,n,n), MatPak{scratch1, 0, 0, n2, n2});
-    madd_s(b.make(  0, n2, n2, n), b.make( n2,n2,n,n), MatPak{scratch2, 0, 0, n2, n2});
+    msub_s(a.subPak( n2, 0, n, n2), a.subPak( n2,n2,n,n), MatPak{scratch1, 0, 0, n2, n2});
+    madd_s(b.subPak(  0, n2, n2, n), b.subPak( n2,n2,n,n), MatPak{scratch2, 0, 0, n2, n2});
     mmult_strassen(scratch1, scratch2, M7);
 
 
@@ -232,19 +262,22 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
 }
 
 int main() {
-    Matrix* a = new Matrix(2);
+    Matrix* a = new Matrix(3);
     a->index(0,1) = 1;
     a->index(1,0) = 1;
+    a->index(2,2) = 1;
+
 
     a->print();
 
-    Matrix* b = new Matrix(2);
+    Matrix* b = new Matrix(3);
     b->index(0,0) = 2;
     b->index(1,1) = 2;
+    b->index(2,2) = 2;
     b->print();
 
 
-    Matrix* res = new Matrix(2);
+    Matrix* res = new Matrix(3);
 
     mmult_strassen(a,b,res);
     res->print();
