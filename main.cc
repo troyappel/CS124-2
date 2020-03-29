@@ -61,12 +61,6 @@ struct MatPak {
     bool padded_d;
 
     inline long& index(size_t x, size_t y) {
-        if(padded_r && (x == e_x - s_x - 1)) {
-            return nothing;
-        } else if(padded_d && (y == e_y - s_y - 1)) {
-            nothing = 0;
-            return nothing;
-        }
         return m->index(s_x + x, s_y + y);
     };
 
@@ -95,15 +89,11 @@ MatPak make(Matrix* m,size_t s_x,size_t s_y, size_t e_x, size_t e_y) {
     bool padded_d = false;
     size_t n_x = e_x - s_x;
     if (e_x > m->sz) {
-        // printf("%ul, %ul, %ul, %ul\n", );
-        // e_x++;
         padded_r = true;
     }
 
     size_t n_y = e_y - s_y;
     if (e_y > m->sz) {
-        // printf("%ul, %ul, %ul, %ul\n", );
-        // e_y++;
         padded_d = true;
     }
 
@@ -117,10 +107,10 @@ MatPak make(Matrix* m,size_t s_x,size_t s_y, size_t e_x, size_t e_y) {
 
 void mmult_s(MatPak a, MatPak b, MatPak res) {
     size_t n = a.e_x - a.s_x;
-
     for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            for (int k = 0; k < n; k++) {
+        for (int k = 0; k < n; k++) {
+            for (int j = 0; j < n; j++) {
+
                 res.index(i, j) += a.index(i,k) * b.index(k, j);
             }
         }
@@ -137,12 +127,6 @@ void mmult(Matrix* a, Matrix* b, Matrix* res) {
 
 
 void madd_s(MatPak a, MatPak b, MatPak res) {
-    // assert(a.m->sz >= a.e_x);
-    // assert(a.m->sz >= a.e_y);
-
-    // assert(b.m->sz >= b.e_x);
-    // assert(b.m->sz >= b.e_y);
-
     assert(a.e_y - a.s_y == b.e_y - b.s_y);
     assert(a.e_x - a.s_x == b.e_x - b.s_x);
 
@@ -311,6 +295,13 @@ bool are_equal(Matrix* a, Matrix* b) {
 
 int main(int argc, char** argv) {
 
+    size_t cutoff_a = strtoul(argv[2],nullptr, 10);
+    if(cutoff_a != 0) {
+        CUTOFF = cutoff_a;
+    }
+
+    // if(strtoul(argv[2],nullptr, 10))
+
     size_t dim = strtoul(argv[2],nullptr, 10);
 
     std::ifstream infile; 
@@ -339,27 +330,35 @@ int main(int argc, char** argv) {
     // b->print();
 
 
-    Matrix* res = new Matrix(dim);
 
-    printf("Multiplying standard...");
+    printf("Multiplying strassen...\n");
 
-    auto begin = std::chrono::high_resolution_clock::now();
-    mmult(a,b,res);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count() << "ms\n";
+    unsigned long total_i = 0;
+    unsigned long total_s = 0;
 
-    Matrix* res_s = new Matrix(dim);
-    printf("Multiplying Strassen...");
+    for(int i = 0; i < 1; i++) {
+        // {
+        //     Matrix* res = new Matrix(dim);
+        //     auto begin = std::chrono::high_resolution_clock::now();
+        //     mmult(a,b,res);
+        //     auto end = std::chrono::high_resolution_clock::now();
+        //     total_i += std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
+        //     delete res;
+        // }
+        {
+            Matrix* res = new Matrix(dim);
+            auto begin = std::chrono::high_resolution_clock::now();
+            mmult_strassen(a,b,res);
+            auto end = std::chrono::high_resolution_clock::now();
+            total_s += std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
+            delete res;
+        }
+    }
 
-    begin = std::chrono::high_resolution_clock::now();
-    mmult_strassen(a,b,res_s);
-    end = std::chrono::high_resolution_clock::now();
-    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end-begin).count() << "ms\n";
+    // printf("Iterative: %lu μs\n", total_i/10);
 
-    res->print();
-    res_s->print();
+    printf("Strassen: %lu μs\n", total_s/1);
 
-    
 
-    assert(are_equal(res, res_s));
+    // assert(are_equal(res, res_s));
 }
