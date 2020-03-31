@@ -5,6 +5,7 @@
 #include <fstream>
 #include <assert.h>
 #include <chrono>
+#include <random>
 
 size_t CUTOFF = 3;
 
@@ -77,7 +78,7 @@ struct MatPak {
         size_t e_y0 = s_y0 + (n+1)/2;
 
 
-        printf("(%ld, %ld), (%ld, %ld)\n", s_x0, s_y0, e_x0, e_y0);
+        // printf("(%ld, %ld), (%ld, %ld)\n", s_x0, s_y0, e_x0, e_y0);
         return subPak(s_x0, s_y0, e_x0, e_y0);
     }
 
@@ -110,7 +111,6 @@ void mmult_s(MatPak a, MatPak b, MatPak res) {
     for (int i = 0; i < n; i++) {
         for (int k = 0; k < n; k++) {
             for (int j = 0; j < n; j++) {
-
                 res.index(i, j) += a.index(i,k) * b.index(k, j);
             }
         }
@@ -171,16 +171,6 @@ void madd(Matrix* a, Matrix* b, Matrix* res) {
     madd_s(MatPak{a, 0, 0, a->sz, a->sz}, MatPak{b, 0, 0, b->sz, b->sz}, MatPak{res, 0, 0, res->sz, res->sz});
 }
 
-void cmult(Matrix* a, long c) {
-    size_t n = a->sz;
-
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            a->index(i,j) *= c;
-        }
-    }
-}
-
 void mmult_strassen(Matrix* a, Matrix* b, Matrix* res);
 void mmult_strassen_s(MatPak a, MatPak b, MatPak res);
 
@@ -198,10 +188,14 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
         return;
     }
 
+    // printf("c:%lu", CUTOFF);
+
     if (n <= CUTOFF) {
+        // printf("FUCLK");
         mmult_s(a,b,res);
         return;
     }
+    // printf("FDJSA");
 
     Matrix* M1 = new Matrix(n2);
     Matrix* M2 = new Matrix(n2);
@@ -244,15 +238,16 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
     madd_s(b.subSet(2,1), b.subSet(2,2), scratch2_p);
     mmult_strassen(scratch1, scratch2, M7);
 
-    M7->print();
+    // M7->print();
 
-    M1->print();
-    M2->print();
-    M3->print();
-    M4->print();
-    M5->print();
-    M6->print();
-    M7->print();
+    // M1->print();
+    // M2->print();
+    // M3->print();
+    // M4->print();
+    // M5->print();
+    // M6->print();
+    // M7->print();
+
 
 
     // Put together result
@@ -295,7 +290,7 @@ bool are_equal(Matrix* a, Matrix* b) {
 
 int main(int argc, char** argv) {
 
-    size_t cutoff_a = strtoul(argv[2],nullptr, 10);
+    size_t cutoff_a = strtoul(argv[1],nullptr, 10);
     if(cutoff_a != 0) {
         CUTOFF = cutoff_a;
     }
@@ -332,11 +327,12 @@ int main(int argc, char** argv) {
 
 
     printf("Multiplying strassen...\n");
+    
 
     unsigned long total_i = 0;
     unsigned long total_s = 0;
 
-    for(int i = 0; i < 1; i++) {
+    for(int i = 0; i < 10; i++) {
         // {
         //     Matrix* res = new Matrix(dim);
         //     auto begin = std::chrono::high_resolution_clock::now();
@@ -355,10 +351,37 @@ int main(int argc, char** argv) {
         }
     }
 
-    // printf("Iterative: %lu μs\n", total_i/10);
-
-    printf("Strassen: %lu μs\n", total_s/1);
+    printf("Time: %lu micros\n", total_s / 10);
 
 
-    // assert(are_equal(res, res_s));
+    // std::random_device rd;
+    // std::mt19937 gen(rd());
+    // std::uniform_real_distribution<> dis(0, 1);//uniform distribution between 0 and 1
+
+
+    // a->clear();
+    // b->clear();
+
+    // for(int i = 1; i < dim; i++) {
+    //     for(int j = 0; j < i; j++) {
+    //         if(dis(gen) < 0.05) {
+    //             a->index(i,j) = 1;
+    //             a->index(dim - i, dim - j) = 1;
+    //         }
+    //     }
+    // }
+
+    // Matrix* res = new Matrix(dim);
+    // Matrix* res2 = new Matrix(dim);
+    // mmult_strassen(a, a, res);
+    // mmult_strassen(a, res, res2);
+
+    // size_t l = 0;
+    // for (int i = 0; i < dim; i++) {
+    //     l += res2->index(i,i);
+    // }
+
+    // printf("Found value: %lu\n", l/6);
+
+
 }
