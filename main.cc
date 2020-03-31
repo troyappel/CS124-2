@@ -62,11 +62,23 @@ struct MatPak {
     bool padded_d;
 
     inline long& index(size_t x, size_t y) {
+        if(x + s_x >= m->sz) {
+            printf("n");
+            // assert(false);
+            nothing = 0;
+            return nothing;
+        }
+        if(y + s_y >= m->sz) {
+            printf("n");
+            nothing = 0;
+            return nothing;
+        }
+
         return m->index(s_x + x, s_y + y);
     };
 
-    inline MatPak subPak(size_t s_x,size_t s_y, size_t e_x, size_t e_y) {
-        return make(m, this->s_x + s_x, this->s_y + s_y, this->s_x + e_x, this->s_y + e_y);
+    inline MatPak subPak(size_t s_x0,size_t s_y0, size_t e_x0, size_t e_y0) {
+        return make(m, this->s_x + s_x0, this->s_y + s_y0, this->s_x + e_x0, this->s_y + e_y0);
     };
 
     inline MatPak subSet(size_t i, size_t j) {
@@ -80,6 +92,18 @@ struct MatPak {
 
         // printf("(%ld, %ld), (%ld, %ld)\n", s_x0, s_y0, e_x0, e_y0);
         return subPak(s_x0, s_y0, e_x0, e_y0);
+    }
+
+    inline void print() {
+        printf("[\n");
+        for(int i = 0; i < e_x - s_x; i++) {
+            printf("   [");
+            for(int j = 0; j < e_x - s_x; j++) {
+                printf("%ld,", this->index(i,j));
+            }
+            printf("]\n");
+        }
+        printf("]\n");
     }
 
 };
@@ -211,11 +235,25 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
     MatPak scratch1_p = make(scratch1, 0, 0, n2, n2);
     MatPak scratch2_p = make(scratch2, 0, 0, n2, n2);
 
+    printf("A and subsets: ");
+    a.print();
+    a.subSet(1,1).print();
+    a.subSet(1,2).print();
+    a.subSet(2,1).print();
+    a.subSet(2,2).print();
+    printf("B and subsets: ");
+    b.m->print();
+    b.print();
+    b.subSet(1,1).print();
+    b.subSet(1,2).print();
+    b.subSet(2,1).print();
+    b.subSet(2,2).print();
+
     // std::cout << n << "hither" << n2 << "\n" << std::flush;
 
     madd_s(a.subSet(1,1), a.subSet(2,2), scratch1_p);
     madd_s(b.subSet(1,1), b.subSet(2,2), scratch2_p);
-    mmult_strassen(scratch1, scratch2, M1);
+    mmult_strassen_s(scratch1_p, scratch2_p,  make(M1, 0, 0, n2, n2));
 
 
     madd_s(a.subSet(2,1), a.subSet(2,2), scratch1_p);
@@ -232,21 +270,30 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
 
     msub_s(a.subSet(2,1), a.subSet(1,1), scratch1_p);
     madd_s(b.subSet(1,1), b.subSet(1,2), scratch2_p);
-    mmult_strassen(scratch1, scratch2, M6);
+    mmult_strassen_s(scratch1_p, scratch2_p, make(M6, 0, 0, n2, n2));
 
     msub_s(a.subSet(1,2), a.subSet(2,2), scratch1_p);
     madd_s(b.subSet(2,1), b.subSet(2,2), scratch2_p);
-    mmult_strassen(scratch1, scratch2, M7);
+    mmult_strassen_s(scratch1_p, scratch2_p, make(M7, 0, 0, n2, n2));
 
     // M7->print();
 
-    // M1->print();
-    // M2->print();
-    // M3->print();
-    // M4->print();
-    // M5->print();
-    // M6->print();
-    // M7->print();
+
+
+    printf("M1: ");
+    M1->print();
+    printf("M2: ");
+    M2->print();
+    printf("M3: ");
+    M3->print();
+    printf("M4: ");
+    M4->print();
+    printf("M5: ");
+    M5->print();
+    printf("M6: ");
+    M6->print();
+    printf("M7: ");
+    M7->print();
 
 
 
@@ -329,10 +376,10 @@ int main(int argc, char** argv) {
     printf("Multiplying strassen...\n");
     
 
-    unsigned long total_i = 0;
-    unsigned long total_s = 0;
+    // unsigned long total_i = 0;
+    // unsigned long total_s = 0;
 
-    for(int i = 0; i < 10; i++) {
+    // for(int i = 0; i < 10; i++) {
         // {
         //     Matrix* res = new Matrix(dim);
         //     auto begin = std::chrono::high_resolution_clock::now();
@@ -341,17 +388,26 @@ int main(int argc, char** argv) {
         //     total_i += std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
         //     delete res;
         // }
-        {
-            Matrix* res = new Matrix(dim);
-            auto begin = std::chrono::high_resolution_clock::now();
-            mmult_strassen(a,b,res);
-            auto end = std::chrono::high_resolution_clock::now();
-            total_s += std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
-            delete res;
-        }
-    }
+        // {
+        // }
+    // }
 
-    printf("Time: %lu micros\n", total_s / 10);
+    Matrix* res = new Matrix(dim);
+    // auto begin = std::chrono::high_resolution_clock::now();
+    mmult_strassen(a,b,res);
+    // auto end = std::chrono::high_resolution_clock::now();
+    // total_s += std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
+
+    Matrix* res2 = new Matrix(dim);
+
+    mmult(a,b,res2);
+
+    res->print();
+    res2->print();
+
+    assert(are_equal(res, res2));
+
+    // printf("Time: %lu micros\n", total_s / 10);
 
 
     // std::random_device rd;
