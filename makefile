@@ -23,5 +23,5 @@ exec:
 	# 	num1=$$((num1 * 2)) ; \
 	# done ; \
 	# true
-	./strassen 2 15 input.txt
+	./strassen 2 512 input.txt
 .ONESHELL:
