@@ -7,7 +7,7 @@
 #include <chrono>
 #include <random>
 
-size_t CUTOFF = 3;
+size_t CUTOFF = 64;
 
 struct Matrix{
     size_t sz;
