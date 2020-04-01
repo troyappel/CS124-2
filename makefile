@@ -1,5 +1,5 @@
-strassen: main.cc
-	g++ -o strassen main.cc -Ofast
+strassen: strassen.cpp
+	g++ -std=c++17 -O2 -Wall -Wextra strassen.cpp -o strassen -lm -lpthread
 
 run: clean strassen exec
 
@@ -23,5 +23,5 @@ exec:
 	# 	num1=$$((num1 * 2)) ; \
 	# done ; \
 	# true
-	./strassen 64 1024 input.txt
+	# ./strassen 64 1024 input.txt
 .ONESHELL:

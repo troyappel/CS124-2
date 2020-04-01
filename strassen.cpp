@@ -33,9 +33,9 @@ struct Matrix{
 
     void print() {
         printf("[\n");
-        for(int i = 0; i < sz; i++) {
+        for(size_t i = 0; i < sz; i++) {
             printf("   [");
-            for(int j = 0; j < sz; j++) {
+            for(size_t j = 0; j < sz; j++) {
                 printf("%ld,", this->index(i,j));
             }
             printf("]\n");
@@ -57,9 +57,6 @@ struct MatPak {
 
     size_t e_x;
     size_t e_y;
-
-    bool padded_r;
-    bool padded_d;
 
     inline long& index(size_t x, size_t y) {
         if(x + s_x >= m->sz) {
@@ -96,9 +93,9 @@ struct MatPak {
 
     inline void print() {
         printf("[\n");
-        for(int i = 0; i < e_x - s_x; i++) {
+        for(size_t i = 0; i < e_x - s_x; i++) {
             printf("   [");
-            for(int j = 0; j < e_x - s_x; j++) {
+            for(size_t j = 0; j < e_x - s_x; j++) {
                 printf("%ld,", this->index(i,j));
             }
             printf("]\n");
@@ -110,20 +107,7 @@ struct MatPak {
 
 // Always returns an even-size MatPak, padded with 0 if bounds given extend past edge
 MatPak make(Matrix* m,size_t s_x,size_t s_y, size_t e_x, size_t e_y) {
-    bool padded_r = false;
-    bool padded_d = false;
-    size_t n_x = e_x - s_x;
-    if (e_x > m->sz) {
-        padded_r = true;
-    }
-
-    size_t n_y = e_y - s_y;
-    if (e_y > m->sz) {
-        padded_d = true;
-    }
-
-
-    return MatPak{m, s_x, s_y, e_x, e_y, padded_r, padded_d};
+    return MatPak{m, s_x, s_y, e_x, e_y};
 
 }
 
@@ -132,9 +116,9 @@ MatPak make(Matrix* m,size_t s_x,size_t s_y, size_t e_x, size_t e_y) {
 
 void mmult_s(MatPak a, MatPak b, MatPak res) {
     size_t n = a.e_x - a.s_x;
-    for (int i = 0; i < n; i++) {
-        for (int k = 0; k < n; k++) {
-            for (int j = 0; j < n; j++) {
+    for (size_t i = 0; i < n; i++) {
+        for (size_t k = 0; k < n; k++) {
+            for (size_t j = 0; j < n; j++) {
                 res.index(i, j) += a.index(i,k) * b.index(k, j);
             }
         }
@@ -160,8 +144,8 @@ void madd_s(MatPak a, MatPak b, MatPak res) {
 
     size_t n = a.e_x - a.s_x;
 
-    for(int i = 0; i < a.e_x - a.s_x; i++) {
-        for (int j = 0; j < a.e_y - a.s_y; j++) {
+    for(size_t i = 0; i < n; i++) {
+        for (size_t j = 0; j < n; j++) {
             res.index(i, j) 
                 = a.index(i, j)
                 + b.index(i, j);
@@ -180,8 +164,8 @@ void msub_s(MatPak a, MatPak b, MatPak res) {
     // assert(a.e_y - a.s_y == b.e_y - b.s_y);
     // assert(a.e_x - a.s_x == b.e_x - b.s_x);
 
-    for(int i = 0; i < a.e_x - a.s_x; i++) {
-        for (int j = 0; j < a.e_y - a.s_y; j++) {
+    for(size_t i = 0; i < a.e_x - a.s_x; i++) {
+        for (size_t j = 0; j < a.e_y - a.s_y; j++) {
             res.index(i, j) 
                 = a.index(i, j)
                 - b.index(i, j);
@@ -337,6 +321,8 @@ bool are_equal(Matrix* a, Matrix* b) {
 
 int main(int argc, char** argv) {
 
+    (void)(argc);
+
     size_t cutoff_a = strtoul(argv[1],nullptr, 10);
     if(cutoff_a != 0) {
         CUTOFF = cutoff_a;
@@ -381,7 +367,7 @@ int main(int argc, char** argv) {
 
     //Print
 
-    for(int i = 0; i < dim; i++) {
+    for(size_t i = 0; i < dim; i++) {
         printf("%ld\n", res->index(i,i));
     }
 
