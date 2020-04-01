@@ -151,11 +151,11 @@ void mmult(Matrix* a, Matrix* b, Matrix* res) {
 
 
 void madd_s(MatPak a, MatPak b, MatPak res) {
-    assert(a.e_y - a.s_y == b.e_y - b.s_y);
-    assert(a.e_x - a.s_x == b.e_x - b.s_x);
+    // assert(a.e_y - a.s_y == b.e_y - b.s_y);
+    // assert(a.e_x - a.s_x == b.e_x - b.s_x);
 
-    assert(a.e_y - a.s_y == res.e_y - res.s_y);
-    assert(a.e_x - a.s_x == res.e_x - res.s_x);
+    // assert(a.e_y - a.s_y == res.e_y - res.s_y);
+    // assert(a.e_x - a.s_x == res.e_x - res.s_x);
 
 
     size_t n = a.e_x - a.s_x;
@@ -177,8 +177,8 @@ void msub_s(MatPak a, MatPak b, MatPak res) {
     // assert(b.m->sz >= b.e_x);
     // assert(b.m->sz >= b.e_y);
 
-    assert(a.e_y - a.s_y == b.e_y - b.s_y);
-    assert(a.e_x - a.s_x == b.e_x - b.s_x);
+    // assert(a.e_y - a.s_y == b.e_y - b.s_y);
+    // assert(a.e_x - a.s_x == b.e_x - b.s_x);
 
     for(int i = 0; i < a.e_x - a.s_x; i++) {
         for (int j = 0; j < a.e_y - a.s_y; j++) {
@@ -373,34 +373,46 @@ int main(int argc, char** argv) {
 
 
 
-    printf("Multiplying strassen...\n");
-    
+    //Multiply    
 
-    unsigned long total_i[9];
-    for(int j = 0; j < 9; j++) {
-        total_i[j] = 0;
+    Matrix* res = new Matrix(dim);
+    mmult_strassen(a,b,res);
+
+
+    //Print
+
+    for(int i = 0; i < dim; i++) {
+        printf("%ld\n", res->index(i,i));
     }
+
+
+    // unsigned long total_i[9];
+    // for(int j = 0; j < 9; j++) {
+    //     total_i[j] = 0;
+    // }
+
+
 
     // unsigned long total_s = 0;
 
-    for(int i = 0; i < 50; i++) {
-        {
-            for(int j = 0; j < 9; j++ ) {
-                CUTOFF = 2 << j;
-                Matrix* res = new Matrix(dim);
-                auto begin = std::chrono::high_resolution_clock::now();
-                mmult_strassen(a,b,res);
-                auto end = std::chrono::high_resolution_clock::now();
-                total_i[j] += std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
-                delete res;
-            }
-        }
-        printf("Finish %lu...\n", i);
-    }
+    // for(int i = 0; i < 1; i++) {
+    //     {
+    //         for(int j = 0; j < 1; j++ ) {
+    //             // CUTOFF = 2 << j;
+    //             Matrix* res = new Matrix(dim);
+    //             auto begin = std::chrono::high_resolution_clock::now();
+    //             mmult_strassen(a,b,res);
+    //             auto end = std::chrono::high_resolution_clock::now();
+    //             total_i[j] += std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
+    //             delete res;
+    //         }
+    //     }
+    //     printf("Finish %lu...\n", i);
+    // }
 
-    for(int j = 0; j < 9; j++) {
-        printf("Cutoff %lu, time %lu\n", 2 << j, total_i[j]/10);
-    }
+    // for(int j = 0; j < 9; j++) {
+    //     printf("Cutoff %lu, time %lu\n", 2 << j, total_i[j]);
+    // }
 
 
 

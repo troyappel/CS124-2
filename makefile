@@ -1,5 +1,5 @@
 strassen: main.cc
-	g++ -o strassen main.cc -Ofast -g
+	g++ -o strassen main.cc -Ofast
 
 run: clean strassen exec
 
@@ -23,5 +23,5 @@ exec:
 	# 	num1=$$((num1 * 2)) ; \
 	# done ; \
 	# true
-	./strassen 2 512 input.txt
+	./strassen 64 1024 input.txt
 .ONESHELL:
