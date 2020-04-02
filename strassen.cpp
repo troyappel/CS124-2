@@ -60,13 +60,10 @@ struct MatPak {
 
     inline long& index(size_t x, size_t y) {
         if(x + s_x >= m->sz) {
-            // printf("n");
-            // assert(false);
             nothing = 0;
             return nothing;
         }
         if(y + s_y >= m->sz) {
-            // printf("n");
             nothing = 0;
             return nothing;
         }
@@ -86,8 +83,6 @@ struct MatPak {
         size_t e_x0 = s_x0 + (n+1)/2;
         size_t e_y0 = s_y0 + (n+1)/2;
 
-
-        // printf("(%ld, %ld), (%ld, %ld)\n", s_x0, s_y0, e_x0, e_y0);
         return subPak(s_x0, s_y0, e_x0, e_y0);
     }
 
@@ -111,8 +106,6 @@ MatPak make(Matrix* m,size_t s_x,size_t s_y, size_t e_x, size_t e_y) {
 
 }
 
-// MatPak submat(MatPak)
-
 
 void mmult_s(MatPak a, MatPak b, MatPak res) {
     size_t n = a.e_x - a.s_x;
@@ -135,13 +128,6 @@ void mmult(Matrix* a, Matrix* b, Matrix* res) {
 
 
 void madd_s(MatPak a, MatPak b, MatPak res) {
-    // assert(a.e_y - a.s_y == b.e_y - b.s_y);
-    // assert(a.e_x - a.s_x == b.e_x - b.s_x);
-
-    // assert(a.e_y - a.s_y == res.e_y - res.s_y);
-    // assert(a.e_x - a.s_x == res.e_x - res.s_x);
-
-
     size_t n = a.e_x - a.s_x;
 
     for(size_t i = 0; i < n; i++) {
@@ -155,15 +141,6 @@ void madd_s(MatPak a, MatPak b, MatPak res) {
 }
 
 void msub_s(MatPak a, MatPak b, MatPak res) {
-    // assert(a.m->sz >= a.e_x);
-    // assert(a.m->sz >= a.e_y);
-
-    // assert(b.m->sz >= b.e_x);
-    // assert(b.m->sz >= b.e_y);
-
-    // assert(a.e_y - a.s_y == b.e_y - b.s_y);
-    // assert(a.e_x - a.s_x == b.e_x - b.s_x);
-
     for(size_t i = 0; i < a.e_x - a.s_x; i++) {
         for (size_t j = 0; j < a.e_y - a.s_y; j++) {
             res.index(i, j) 
@@ -196,14 +173,10 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
         return;
     }
 
-    // printf("c:%lu", CUTOFF);
-
     if (n <= CUTOFF) {
-        // printf("FUCLK");
         mmult_s(a,b,res);
         return;
     }
-    // printf("FDJSA");
 
     Matrix* M1 = new Matrix(n2);
     Matrix* M2 = new Matrix(n2);
@@ -219,21 +192,7 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
     MatPak scratch1_p = make(scratch1, 0, 0, n2, n2);
     MatPak scratch2_p = make(scratch2, 0, 0, n2, n2);
 
-    // printf("A and subsets: ");
-    // a.print();
-    // a.subSet(1,1).print();
-    // a.subSet(1,2).print();
-    // a.subSet(2,1).print();
-    // a.subSet(2,2).print();
-    // printf("B and subsets: ");
-    // b.m->print();
-    // b.print();
-    // b.subSet(1,1).print();
-    // b.subSet(1,2).print();
-    // b.subSet(2,1).print();
-    // b.subSet(2,2).print();
 
-    // std::cout << n << "hither" << n2 << "\n" << std::flush;
 
     madd_s(a.subSet(1,1), a.subSet(2,2), scratch1_p);
     madd_s(b.subSet(1,1), b.subSet(2,2), scratch2_p);
@@ -260,29 +219,9 @@ void mmult_strassen_s(MatPak a, MatPak b, MatPak res) {
     madd_s(b.subSet(2,1), b.subSet(2,2), scratch2_p);
     mmult_strassen_s(scratch1_p, scratch2_p, make(M7, 0, 0, n2, n2));
 
-    // M7->print();
-
-
-
-    // printf("M1: ");
-    // M1->print();
-    // printf("M2: ");
-    // M2->print();
-    // printf("M3: ");
-    // M3->print();
-    // printf("M4: ");
-    // M4->print();
-    // printf("M5: ");
-    // M5->print();
-    // printf("M6: ");
-    // M6->print();
-    // printf("M7: ");
-    // M7->print();
-
-
 
     // Put together result
-    // Have to be more careful here, to keep bounds right!
+    // Have to be careful here, to keep bounds right!
 
     madd_s(make(M1, 0,0,n2,n2), make(M4, 0,0,n2,n2), res.subSet(1,1));
     msub_s(res.subSet(1,1), make(M5, 0,0,n2,n2), res.subSet(1,1));
@@ -328,8 +267,6 @@ int main(int argc, char** argv) {
         CUTOFF = cutoff_a;
     }
 
-    // if(strtoul(argv[2],nullptr, 10))
-
     size_t dim = strtoul(argv[2],nullptr, 10);
 
     std::ifstream infile; 
@@ -354,11 +291,6 @@ int main(int argc, char** argv) {
 
     infile.close();
 
-    // a->print();
-    // b->print();
-
-
-
     //Multiply    
 
     Matrix* res = new Matrix(dim);
@@ -372,12 +304,12 @@ int main(int argc, char** argv) {
     }
 
 
+    // Code for finding cutoff
+
     // unsigned long total_i[9];
     // for(int j = 0; j < 9; j++) {
     //     total_i[j] = 0;
     // }
-
-
 
     // unsigned long total_s = 0;
 
@@ -393,7 +325,6 @@ int main(int argc, char** argv) {
     //             delete res;
     //         }
     //     }
-    //     printf("Finish %lu...\n", i);
     // }
 
     // for(int j = 0; j < 9; j++) {
@@ -402,23 +333,9 @@ int main(int argc, char** argv) {
 
 
 
-    // Matrix* res = new Matrix(dim);
-    // // auto begin = std::chrono::high_resolution_clock::now();
-    // mmult_strassen(a,b,res);
-    // // auto end = std::chrono::high_resolution_clock::now();
-    // // total_s += std::chrono::duration_cast<std::chrono::microseconds>(end-begin).count();
+    // Code for approximating triangles in graph
 
-    // Matrix* res2 = new Matrix(dim);
-
-    // mmult(a,b,res2);
-
-    // res->print();
-    // res2->print();
-
-    // assert(are_equal(res, res2));
-
-    // printf("Time: %lu micros\n", total_s / 10);
-
+    // #define P 0.05
 
     // std::random_device rd;
     // std::mt19937 gen(rd());
@@ -430,7 +347,7 @@ int main(int argc, char** argv) {
 
     // for(int i = 1; i < dim; i++) {
     //     for(int j = 0; j < i; j++) {
-    //         if(dis(gen) < 0.05) {
+    //         if(dis(gen) < P) {
     //             a->index(i,j) = 1;
     //             a->index(dim - i, dim - j) = 1;
     //         }
@@ -448,6 +365,5 @@ int main(int argc, char** argv) {
     // }
 
     // printf("Found value: %lu\n", l/6);
-
 
 }
